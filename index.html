@@ -16,7 +16,8 @@
   *, *::before, *::after { box-sizing: inherit; }
   html, body { margin: 0; min-height: 100%; }
   body { background: #0b1220; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; align-items: flex-start; padding: 14px; }
-  .card { flex: 0 1 520px; min-width: 0; padding: 22px 18px 16px; border-radius: 30px; background: linear-gradient(160deg, #0f172a 0%, #1e3a8a 45%, #0ea5e9 100%); box-shadow: 0 10px 30px rgba(14,165,233,.25); }
+  .card { flex: 0 1 520px; min-width: 0; padding: 22px 18px 16px; border-radius: 30px; position: relative; overflow: hidden; background: var(--g); box-shadow: 0 10px 30px var(--glow); text-shadow: 0 1px 3px rgba(0,0,0,.25);
+    --g: linear-gradient(160deg, #0f172a 0%, #1e3a8a 45%, #0ea5e9 100%); --glow: rgba(14,165,233,.25); }
   .hd { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; align-items: center; gap: 12px; }
   .cond { font-size: clamp(24px, 7vw, 34px); line-height: 1.1; }
   .nm { font-size: clamp(13px, 3.8vw, 18px); color: rgba(255,255,255,.65); margin-top: 4px; }
@@ -42,6 +43,33 @@
   .foot { text-align: center; font-size: 12px; color: rgba(255,255,255,.6); margin-top: 14px; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; display: inline-block; margin-right: 6px; }
   .dot.old { background: #f59e0b; }
+  /* fonds dynamiques */
+  [data-w=sunny] { --g: linear-gradient(160deg, #1d4ed8 0%, #38bdf8 55%, #fbbf24 100%); --glow: rgba(251,191,36,.35); }
+  [data-w=partlycloudy] { --g: linear-gradient(160deg, #2f4f8f 0%, #5b93d8 55%, #a8c8ec 100%); --glow: rgba(91,147,216,.35); }
+  [data-w=cloudy], [data-w=exceptional] { --g: linear-gradient(160deg, #27364b 0%, #4b5d75 55%, #8b9db3 100%); --glow: rgba(139,157,179,.25); }
+  [data-w=rainy] { --g: linear-gradient(160deg, #0b1424 0%, #1c3556 55%, #3d6a91 100%); --glow: rgba(61,106,145,.3); }
+  [data-w=pouring] { --g: linear-gradient(160deg, #050b17 0%, #11233f 55%, #24456f 100%); --glow: rgba(36,69,111,.35); }
+  [data-w^=lightning] { --g: linear-gradient(160deg, #0a0d1f 0%, #2a2766 55%, #4c3a92 100%); --glow: rgba(124,108,220,.35); }
+  [data-w=clear-night] { --g: linear-gradient(160deg, #020617 0%, #0f1b3d 55%, #2a2a6a 100%); --glow: rgba(99,102,241,.3); }
+  [data-w=snowy], [data-w=snowy-rainy], [data-w=hail] { --g: linear-gradient(160deg, #3a4a63 0%, #6c819f 55%, #a9bdd6 100%); --glow: rgba(169,189,214,.3); }
+  [data-w=fog] { --g: linear-gradient(160deg, #3b4658 0%, #6e7c8e 55%, #aab5c2 100%); --glow: rgba(170,181,194,.25); }
+  [data-w^=windy] { --g: linear-gradient(160deg, #134e9e 0%, #0ea5e9 55%, #67e8f9 100%); --glow: rgba(103,232,249,.3); }
+  .fx { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .card > :not(.fx) { position: relative; z-index: 1; }
+  .fx i, .fx div { position: absolute; }
+  .rd { top: -30px; width: 1.5px; height: 18px; background: linear-gradient(transparent, rgba(190,220,255,.7)); animation: rain linear infinite; }
+  .sw { top: -10px; border-radius: 50%; background: #fff; opacity: .85; animation: snow linear infinite; }
+  .st { width: 2px; height: 2px; border-radius: 50%; background: #fff; animation: tw 3s ease-in-out infinite; }
+  .cd { left: -30%; width: 260px; height: 80px; border-radius: 50%; background: rgba(255,255,255,.12); filter: blur(16px); animation: drift linear infinite alternate; }
+  .sg { top: -90px; left: -70px; width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, rgba(255,236,160,.6), rgba(255,236,160,0) 70%); animation: pl 6s ease-in-out infinite alternate; }
+  .fh { inset: 0; background: #e0e7ff; opacity: 0; animation: fh 6s infinite; }
+  @keyframes rain { from { transform: translate(0, 0) rotate(8deg); } to { transform: translate(-250px, 1700px) rotate(8deg); } }
+  @keyframes snow { 0% { transform: translate(0, -10px); } 50% { transform: translate(18px, 800px); } 100% { transform: translate(-8px, 1700px); } }
+  @keyframes tw { 50% { opacity: .15; } }
+  @keyframes drift { to { transform: translateX(140vw); } }
+  @keyframes pl { to { transform: scale(1.18); opacity: .8; } }
+  @keyframes fh { 0%, 90%, 100% { opacity: 0; } 91% { opacity: .35; } 92% { opacity: 0; } 93.5% { opacity: .25; } 95% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .fx { display: none; } }
   /* icônes animées */
   .cl { fill: #5aa2ee; stroke: #fff; stroke-width: 3; stroke-linejoin: round; }
   .fl { animation: fl 5s ease-in-out infinite alternate; }
@@ -56,7 +84,7 @@
 </style>
 </head>
 <body>
-<main class="card">
+<main class="card" id="card"><div class="fx" id="fx"></div>
   <header class="hd">
     <div class="big" id="bigic"></div>
     <div><div class="cond" id="cond">…</div><div class="nm" id="nm"></div></div>
@@ -112,7 +140,26 @@
   const dir = b => b == null ? "" : (typeof b === "number" ? ["N", "NE", "E", "SE", "S", "SO", "O", "NO"][Math.round(b / 45) % 8] : b) + " ";
   const cell = (ic, txt, right) => `<div class="r${right ? " rt" : ""}">${right ? `<span>${txt}</span><i>${ic}</i>` : `<i>${ic}</i><span>${txt}</span>`}</div>`;
 
+  let fxC = null;
+  function setWeather(c) {
+    $("card").dataset.w = c;
+    if (c === fxC) return;
+    fxC = c;
+    let h = "";
+    const R = (a, b) => (a + Math.random() * (b - a)).toFixed(2);
+    const many = (k, f) => { for (let i = 0; i < k; i++) h += f(); };
+    if (c === "sunny" || c === "partlycloudy") h += '<div class="sg"></div>';
+    if (c === "clear-night") many(40, () => `<i class="st" style="left:${R(0, 100)}%;top:${R(0, 100)}%;animation-delay:${R(0, 4)}s"></i>`);
+    if (["cloudy", "partlycloudy", "rainy", "pouring", "lightning", "lightning-rainy", "snowy", "fog"].includes(c)) many(3, () => `<i class="cd" style="top:${R(5, 70)}%;animation-duration:${R(40, 70)}s;animation-delay:-${R(0, 40)}s"></i>`);
+    const rain = { rainy: 45, pouring: 95, "lightning-rainy": 80, "snowy-rainy": 30 }[c];
+    if (rain) many(rain, () => `<i class="rd" style="left:${R(0, 120)}%;animation-duration:${R(.7, 1.2)}s;animation-delay:-${R(0, 2)}s"></i>`);
+    if (["snowy", "snowy-rainy", "hail"].includes(c)) many(45, () => { const z = R(3, 6); return `<i class="sw" style="left:${R(0, 100)}%;width:${z}px;height:${z}px;animation-duration:${R(7, 14)}s;animation-delay:-${R(0, 14)}s"></i>`; });
+    if (c.startsWith("lightning")) h += '<div class="fh"></div>';
+    $("fx").innerHTML = h;
+  }
+
   function render(d) {
+    setWeather(d.cond || "");
     $("bigic").innerHTML = ico(d.cond);
     $("cond").textContent = FR[d.cond] || "Météo";
     $("nm").textContent = NAME;
@@ -131,7 +178,7 @@
     const n = Date.now(), h = [], d = [];
     for (let i = 0; i < 12; i++) h.push({ datetime: new Date(n + i * 36e5).toISOString(), condition: i > 6 ? "rainy" : "cloudy", temperature: 15 + Math.sin(i / 3) * 3, precipitation: i > 6 ? .4 : 0, humidity: 70 + i, precipitation_probability: i > 6 ? 60 : 0, wind_speed: 9 + i % 3 });
     for (let i = 0; i < 5; i++) d.push({ datetime: new Date(n + i * 864e5).toISOString(), condition: ["rainy", "pouring", "cloudy", "sunny", "partlycloudy"][i], temperature: 18 - i * 2, templow: 10 - i, precipitation: [10.5, 8.8, 0, 0, 0][i], precipitation_probability: [100, 88, 40, 10, 0][i], wind_speed: 11 + i });
-    return { t: n / 1e3, cond: "cloudy", temp: 15.4, hum: 85, press: 1029.1, wind: 10, bearing: 180, rain: 0, lux: 8400, cloud: 80, uv: "low", freeze: "no_risk", rise: "07:40", set: "17:21", hourly: h, daily: d };
+    return { t: n / 1e3, cond: new URLSearchParams(location.search).get("c") || "cloudy", temp: 15.4, hum: 85, press: 1029.1, wind: 10, bearing: 180, rain: 0, lux: 8400, cloud: 80, uv: "low", freeze: "no_risk", rise: "07:40", set: "17:21", hourly: h, daily: d };
   };
 
   async function load() {
@@ -145,6 +192,7 @@
   }
   load();
   setInterval(load, 60000);
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
   document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
 </script>
 </body>
