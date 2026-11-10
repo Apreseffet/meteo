@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Météo">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Station Météo Lora Vlad</title>
+<style>
+  :root { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  *, *::before, *::after { box-sizing: inherit; }
+  html, body { margin: 0; min-height: 100%; }
+  body { background: #0b1220; color: #fff; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; align-items: flex-start; padding: 14px; }
+  .card { flex: 0 1 520px; min-width: 0; padding: 22px 18px 16px; border-radius: 30px; background: linear-gradient(160deg, #0f172a 0%, #1e3a8a 45%, #0ea5e9 100%); box-shadow: 0 10px 30px rgba(14,165,233,.25); }
+  .hd { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+  .cond { font-size: clamp(24px, 7vw, 34px); line-height: 1.1; }
+  .nm { font-size: clamp(13px, 3.8vw, 18px); color: rgba(255,255,255,.65); margin-top: 4px; }
+  .t { font-size: clamp(40px, 12vw, 58px); font-weight: 300; white-space: nowrap; }
+  .t sup { font-size: .35em; vertical-align: top; position: relative; top: .35em; margin-left: 2px; }
+  .info { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px 10px; margin: 26px 0 20px; }
+  .r { display: flex; align-items: center; gap: 9px; font-size: clamp(13px, 3.9vw, 17px); white-space: nowrap; min-width: 0; }
+  .r.rt { justify-content: flex-end; }
+  .r i { font-style: normal; font-size: 1.25em; opacity: .85; width: 1.4em; text-align: center; flex: none; }
+  .strip { display: flex; min-width: 0; max-width: 100%; overflow-x: auto; margin-top: 16px; scrollbar-width: none; scroll-snap-type: x proximity; }
+  .strip .c { scroll-snap-align: start; }
+  .strip::-webkit-scrollbar { display: none; }
+  .c { flex: 0 0 16.6667%; min-width: 0; text-align: center; padding: 2px 2px; border-right: 1px solid rgba(255,255,255,.45); font-size: clamp(11px, 3.4vw, 15px); white-space: nowrap; }
+  .c.d { flex-basis: 20%; }
+  .c.d:last-child { border-right: 0; }
+  .c > * { margin: 7px 0; }
+  .c .tm { display: block; font-weight: 400; text-transform: uppercase; }
+  .c b { font-weight: 700; font-size: clamp(13px, 4vw, 17px); }
+  .c .lo { color: rgba(255,255,255,.55); }
+  .mi { width: clamp(38px, 11vw, 52px); height: clamp(38px, 11vw, 52px); margin: 4px auto !important; }
+  .big { width: 84px; height: 84px; }
+  .ic { width: 100%; height: 100%; overflow: visible; }
+  .foot { text-align: center; font-size: 12px; color: rgba(255,255,255,.6); margin-top: 14px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; display: inline-block; margin-right: 6px; }
+  .dot.old { background: #f59e0b; }
+  /* icônes animées */
+  .cl { fill: #5aa2ee; stroke: #fff; stroke-width: 3; stroke-linejoin: round; }
+  .fl { animation: fl 5s ease-in-out infinite alternate; }
+  .dr { stroke: #93c5fd; stroke-width: 3; stroke-linecap: round; fill: none; animation: fall 1s linear infinite; }
+  .sn { fill: #fff; animation: fall 2.2s linear infinite; }
+  .bolt { fill: #fde047; animation: bolt 2s steps(1) infinite; }
+  .fg { stroke: #cbd5e1; stroke-width: 3; stroke-linecap: round; fill: none; animation: fl 3s ease-in-out infinite alternate; }
+  @keyframes fl { from { transform: translateX(-2.5px); } to { transform: translateX(2.5px); } }
+  @keyframes fall { 0% { transform: translateY(-5px); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateY(10px); opacity: 0; } }
+  @keyframes bolt { 0%, 55%, 70% { opacity: 1; } 60%, 75% { opacity: .15; } }
+  @media (prefers-reduced-motion: reduce) { .fl, .dr, .sn, .bolt, .fg { animation: none; } }
+</style>
+</head>
+<body>
+<main class="card">
+  <header class="hd">
+    <div class="big" id="bigic"></div>
+    <div><div class="cond" id="cond">…</div><div class="nm" id="nm"></div></div>
+    <div class="t"><span id="temp">–</span><sup>°C</sup></div>
+  </header>
+  <section class="info" id="info"></section>
+  <section class="strip" id="hr"></section>
+  <section class="strip" id="dy"></section>
+  <div class="foot"><i class="dot" id="dot"></i><span id="age">Chargement…</span></div>
+</main>
+<script>
+  const NAME = "Station Météo Lora Vlad";
+  const TZ = "Europe/Paris"; // fuseau horaire de votre station
+  const DATA_URL = "https://gist.githubusercontent.com/Apreseffet/fe6c58b19680d0e84043d87d1517ebcc/raw/meteo.json";
+  // Ajoutez ?demo à l’adresse de la page pour voir des données de démonstration.
+
+  const FR = { sunny: "Ensoleillé", "clear-night": "Nuit claire", partlycloudy: "Éclaircies", cloudy: "Nuageux", rainy: "Pluie", pouring: "Fortes pluies", lightning: "Orage", "lightning-rainy": "Orage et pluie", snowy: "Neige", "snowy-rainy": "Pluie et neige", hail: "Grêle", fog: "Brouillard", windy: "Venteux", "windy-variant": "Venteux", exceptional: "Exceptionnel" };
+  const UV = { low: "Faible", moderate: "Modéré", high: "Élevé", very_high: "Très élevé", extreme: "Extrême" };
+  const FRZ = { no_risk: "Aucun risque", unlikely: "Peu probable", likely: "Probable", very_likely: "Très probable" };
+
+  // --- Icônes animées (SVG) ---
+  const cloud = (t = "") => `<g ${t}><g class="fl"><path class="cl" d="M20 46h26a10 10 0 0 0 1-20 14 14 0 0 0-27-3 11.5 11.5 0 0 0 0 23z"/></g></g>`;
+  const SUN = `<g><animateTransform attributeName="transform" type="rotate" from="0 32 32" to="360 32 32" dur="16s" repeatCount="indefinite"/><circle cx="32" cy="32" r="10" fill="#facc15"/><path d="M32 8v6M32 50v6M8 32h6M50 32h6M15 15l4 4M45 45l4 4M15 49l4-4M45 19l4-4" stroke="#facc15" stroke-width="3" stroke-linecap="round" fill="none"/></g>`;
+  const MOON = `<path class="fl" d="M40 12a20 20 0 1 0 14 28 15 15 0 0 1-14-28z" fill="#fde68a"/>`;
+  const up = "transform=\"translate(0 -8)\"";
+  const dr = (xs, s = 1) => xs.map((x, i) => `<path class="dr" d="M${x} 44v6" style="animation-duration:${s}s;animation-delay:${(i * .27).toFixed(2)}s"/>`).join("");
+  const sn = xs => xs.map((x, i) => `<circle class="sn" cx="${x}" cy="46" r="2.3" style="animation-delay:${(i * .5).toFixed(1)}s"/>`).join("");
+  const bolt = `<path class="bolt" d="M34 36l-9 13h7l-3 10 12-15h-7z"/>`;
+  const fog = `<path class="fg" d="M14 46h36M20 53h30M14 60h34"/>`;
+  const wind = `<path class="fg" d="M10 24h30a6 6 0 1 0-6-6M10 34h40a6 6 0 1 1-6 6M10 44h24" stroke="#fff"/>`;
+  const I = {
+    sunny: SUN, "clear-night": MOON,
+    partlycloudy: `<g transform="translate(-4 -6) scale(.7)">${SUN}</g>` + cloud('transform="translate(6 8)"'),
+    cloudy: cloud(), exceptional: cloud(),
+    rainy: cloud(up) + dr([22, 32, 42]),
+    pouring: cloud(up) + dr([18, 27, 36, 45], .6),
+    lightning: cloud(up) + bolt,
+    "lightning-rainy": cloud(up) + bolt + dr([20, 46]),
+    snowy: cloud(up) + sn([22, 32, 42]), "snowy-rainy": cloud(up) + sn([22, 42]) + dr([32]), hail: cloud(up) + sn([22, 32, 42]),
+    fog: cloud('transform="translate(0 -10)"') + fog,
+    windy: wind, "windy-variant": wind
+  };
+  const ico = c => `<svg class="ic" viewBox="0 0 64 64">${I[c] || I.cloudy}</svg>`;
+
+  // --- Utilitaires ---
+  const $ = id => document.getElementById(id);
+  const fmt = v => Number(v).toLocaleString("fr-FR", { maximumFractionDigits: 1 });
+  const u = (v, x) => v == null ? "–" : fmt(v) + " " + x;
+  const tp = v => v == null ? "–" : fmt(v) + "°C";
+  const clean = s => s == null ? "–" : String(s).replace(/_/g, " ");
+  const hh = s => new Date(s).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: TZ });
+  const dd = s => new Date(s).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", timeZone: TZ });
+  const dir = b => b == null ? "" : (typeof b === "number" ? ["N", "NE", "E", "SE", "S", "SO", "O", "NO"][Math.round(b / 45) % 8] : b) + " ";
+  const cell = (ic, txt, right) => `<div class="r${right ? " rt" : ""}">${right ? `<span>${txt}</span><i>${ic}</i>` : `<i>${ic}</i><span>${txt}</span>`}</div>`;
+
+  function render(d) {
+    $("bigic").innerHTML = ico(d.cond);
+    $("cond").textContent = FR[d.cond] || "Météo";
+    $("nm").textContent = NAME;
+    $("temp").textContent = d.temp == null ? "–" : fmt(d.temp);
+    const L = [d.cloud == null ? ["🌡️", "Rosée " + u(d.dew, "°C")] : ["☁️", u(d.cloud, "%")], ["🌧️", u(d.rain, "mm")], ["❄️", FRZ[d.freeze] || clean(d.freeze)], ["☀️", UV[d.uv] || clean(d.uv)], ["🌅", d.rise || "–"]];
+    const R = [["💨", dir(d.bearing) + u(d.wind, "km/h")], ["💧", u(d.hum, "%")], ["🧭", u(d.press, "hPa")], ["🔆", u(d.lux, "lx")], ["🌇", d.set || "–"]];
+    $("info").innerHTML = L.map((l, i) => cell(l[0], l[1], false) + cell(R[i][0], R[i][1], true)).join("");
+    $("hr").innerHTML = (d.hourly || []).map(f => `<div class="c"><span class="tm">${hh(f.datetime)}</span><div class="mi">${ico(f.condition)}</div><b>${tp(f.temperature)}</b><div>${u(f.precipitation, "mm")}</div><div>${u(f.humidity, "%")}</div><div>${u(f.precipitation_probability, "%")}</div><div>${u(f.wind_speed, "km/h")}</div></div>`).join("");
+    $("dy").innerHTML = (d.daily || []).map(f => `<div class="c d"><span class="tm">${dd(f.datetime)}</span><div class="mi">${ico(f.condition)}</div><b>${tp(f.temperature)}</b><div class="lo">${tp(f.templow)}</div><div>${u(f.precipitation, "mm")}</div><div>${u(f.precipitation_probability, "%")}</div><div>${u(f.wind_speed, "km/h")}</div></div>`).join("");
+    const min = Math.max(0, Math.round((Date.now() / 1000 - d.t) / 60)), old = min > 30;
+    $("dot").className = "dot" + (old ? " old" : "");
+    $("age").textContent = old ? "Données anciennes (il y a " + min + " min)" : (min < 1 ? "Mis à jour à l’instant" : "Mis à jour il y a " + min + " min");
+  }
+
+  const demo = () => {
+    const n = Date.now(), h = [], d = [];
+    for (let i = 0; i < 12; i++) h.push({ datetime: new Date(n + i * 36e5).toISOString(), condition: i > 6 ? "rainy" : "cloudy", temperature: 15 + Math.sin(i / 3) * 3, precipitation: i > 6 ? .4 : 0, humidity: 70 + i, precipitation_probability: i > 6 ? 60 : 0, wind_speed: 9 + i % 3 });
+    for (let i = 0; i < 5; i++) d.push({ datetime: new Date(n + i * 864e5).toISOString(), condition: ["rainy", "pouring", "cloudy", "sunny", "partlycloudy"][i], temperature: 18 - i * 2, templow: 10 - i, precipitation: [10.5, 8.8, 0, 0, 0][i], precipitation_probability: [100, 88, 40, 10, 0][i], wind_speed: 11 + i });
+    return { t: n / 1e3, cond: "cloudy", temp: 15.4, hum: 85, press: 1029.1, wind: 10, bearing: 180, rain: 0, lux: 8400, cloud: 80, uv: "low", freeze: "no_risk", rise: "07:40", set: "17:21", hourly: h, daily: d };
+  };
+
+  async function load() {
+    try {
+      const d = location.search.includes("demo") ? demo() : await (await fetch(DATA_URL + "?t=" + Date.now(), { cache: "no-store" })).json();
+      render(d);
+    } catch (e) {
+      $("dot").className = "dot old";
+      $("age").textContent = "Impossible de charger les données";
+    }
+  }
+  load();
+  setInterval(load, 60000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
+</script>
+</body>
+</html>
