@@ -140,6 +140,34 @@
   const dir = b => b == null ? "" : (typeof b === "number" ? ["N", "NE", "E", "SE", "S", "SO", "O", "NO"][Math.round(b / 45) % 8] : b) + " ";
   const cell = (ic, txt, right) => `<div class="r${right ? " rt" : ""}">${right ? `<span>${txt}</span><i>${ic}</i>` : `<i>${ic}</i><span>${txt}</span>`}</div>`;
 
+  // --- Mémoire des dernières données valides ---
+  // Si la station ou Home Assistant renvoie des prévisions vides (entité indisponible),
+  // on garde et on affiche les dernières prévisions connues au lieu de les effacer.
+  const KEY = "meteo-last";
+  const store = {
+    get() { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch (e) { return null; } },
+    set(v) { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch (e) {} }
+  };
+  const dayKey = s => new Date(s).toLocaleDateString("sv-SE", { timeZone: TZ });
+
+  function keepForecasts(d) {
+    const last = store.get() || {};
+    const hasH = Array.isArray(d.hourly) && d.hourly.length > 0;
+    const hasD = Array.isArray(d.daily) && d.daily.length > 0;
+    const out = Object.assign({}, d);
+    out.hourly = hasH ? d.hourly : (last.hourly || []);
+    out.daily = hasD ? d.daily : (last.daily || []);
+    out.fcOld = !(hasH && hasD);
+    out.fcT = out.fcOld ? (last.fcT || null) : (d.t || Date.now() / 1000);
+    if (hasH || hasD) store.set(out);  // on ne mémorise que des données utiles
+    if (out.fcOld) {                   // retire ce qui est déjà passé
+      const now = Date.now(), today = dayKey(now);
+      out.hourly = out.hourly.filter(f => new Date(f.datetime).getTime() > now - 36e5);
+      out.daily = out.daily.filter(f => dayKey(f.datetime) >= today);
+    }
+    return out;
+  }
+
   let fxC = null;
   function setWeather(c) {
     $("card").dataset.w = c;
@@ -171,7 +199,8 @@
     $("dy").innerHTML = (d.daily || []).map(f => `<div class="c d"><span class="tm">${dd(f.datetime)}</span><div class="mi">${ico(f.condition)}</div><b>${tp(f.temperature)}</b><div class="lo">${tp(f.templow)}</div><div>${u(f.precipitation, "mm")}</div><div>${u(f.precipitation_probability, "%")}</div><div>${u(f.wind_speed, "km/h")}</div></div>`).join("");
     const min = Math.max(0, Math.round((Date.now() / 1000 - d.t) / 60)), old = min > 30;
     $("dot").className = "dot" + (old ? " old" : "");
-    $("age").textContent = old ? "Données anciennes (il y a " + min + " min)" : (min < 1 ? "Mis à jour à l’instant" : "Mis à jour il y a " + min + " min");
+    const fcNote = d.fcOld && d.fcT ? " · prévisions du " + dd(d.fcT * 1000) + " " + hh(d.fcT * 1000) : "";
+    $("age").textContent = (old ? "Données anciennes (il y a " + min + " min)" : (min < 1 ? "Mis à jour à l’instant" : "Mis à jour il y a " + min + " min")) + fcNote;
   }
 
   const demo = () => {
@@ -183,13 +212,16 @@
 
   async function load() {
     try {
-      const d = location.search.includes("demo") ? demo() : await (await fetch(DATA_URL + "?t=" + Date.now(), { cache: "no-store" })).json();
-      render(d);
+      const isDemo = location.search.includes("demo");
+      const raw = isDemo ? demo() : await (await fetch(DATA_URL + "?t=" + Date.now(), { cache: "no-store" })).json();
+      render(isDemo ? raw : keepForecasts(raw));
     } catch (e) {
       $("dot").className = "dot old";
       $("age").textContent = "Impossible de charger les données";
     }
   }
+  const first = location.search.includes("demo") ? null : store.get();
+  if (first) render(first);  // affichage immédiat des dernières données connues
   load();
   setInterval(load, 60000);
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
