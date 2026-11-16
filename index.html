@@ -200,14 +200,18 @@
     const min = Math.max(0, Math.round((Date.now() / 1000 - d.t) / 60)), old = min > 30;
     $("dot").className = "dot" + (old ? " old" : "");
     const fcNote = d.fcOld && d.fcT ? " · prévisions du " + dd(d.fcT * 1000) + " " + hh(d.fcT * 1000) : "";
-    $("age").textContent = (old ? "Données anciennes (il y a " + min + " min)" : (min < 1 ? "Mis à jour à l’instant" : "Mis à jour il y a " + min + " min")) + fcNote;
+    // Jour et heure de la dernière réception des données de la station (d.rx),
+    // à défaut jour et heure du dernier envoi vers la page (d.t)
+    const rxNote = d.rx ? " · station reçue " + dd(d.rx * 1000) + " à " + hh(d.rx * 1000)
+                 : d.t ? " · données du " + dd(d.t * 1000) + " à " + hh(d.t * 1000) : "";
+    $("age").textContent = (old ? "Données anciennes (il y a " + min + " min)" : (min < 1 ? "Mis à jour à l’instant" : "Mis à jour il y a " + min + " min")) + rxNote + fcNote;
   }
 
   const demo = () => {
     const n = Date.now(), h = [], d = [];
     for (let i = 0; i < 12; i++) h.push({ datetime: new Date(n + i * 36e5).toISOString(), condition: i > 6 ? "rainy" : "cloudy", temperature: 15 + Math.sin(i / 3) * 3, precipitation: i > 6 ? .4 : 0, humidity: 70 + i, precipitation_probability: i > 6 ? 60 : 0, wind_speed: 9 + i % 3 });
     for (let i = 0; i < 5; i++) d.push({ datetime: new Date(n + i * 864e5).toISOString(), condition: ["rainy", "pouring", "cloudy", "sunny", "partlycloudy"][i], temperature: 18 - i * 2, templow: 10 - i, precipitation: [10.5, 8.8, 0, 0, 0][i], precipitation_probability: [100, 88, 40, 10, 0][i], wind_speed: 11 + i });
-    return { t: n / 1e3, cond: new URLSearchParams(location.search).get("c") || "cloudy", temp: 15.4, hum: 85, press: 1029.1, wind: 10, bearing: 180, rain: 0, lux: 8400, cloud: 80, uv: "low", freeze: "no_risk", rise: "07:40", set: "17:21", hourly: h, daily: d };
+    return { t: n / 1e3, rx: n / 1e3 - 600, cond: new URLSearchParams(location.search).get("c") || "cloudy", temp: 15.4, hum: 85, press: 1029.1, wind: 10, bearing: 180, rain: 0, lux: 8400, cloud: 80, uv: "low", freeze: "no_risk", rise: "07:40", set: "17:21", hourly: h, daily: d };
   };
 
   async function load() {
