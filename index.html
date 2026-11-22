@@ -19,7 +19,8 @@
   .card { flex: 0 1 520px; min-width: 0; padding: 22px 18px 16px; border-radius: 30px; position: relative; overflow: hidden; background: var(--g); box-shadow: 0 10px 30px var(--glow); text-shadow: 0 1px 3px rgba(0,0,0,.25);
     --g: linear-gradient(160deg, #0f172a 0%, #1e3a8a 45%, #0ea5e9 100%); --glow: rgba(14,165,233,.25); }
   .hd { display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; align-items: center; gap: 12px; }
-  .cond { font-size: clamp(24px, 7vw, 34px); line-height: 1.1; }
+  .cond { font-size: clamp(24px, 7vw, 34px); line-height: 1.1; overflow-wrap: anywhere; }
+  .cond.lg { font-size: clamp(12px, 3.8vw, 24px); }
   .nm { font-size: clamp(13px, 3.8vw, 18px); color: rgba(255,255,255,.65); margin-top: 4px; }
   .t { font-size: clamp(40px, 12vw, 58px); font-weight: 300; white-space: nowrap; }
   .t sup { font-size: .35em; vertical-align: top; position: relative; top: .35em; margin-left: 2px; }
@@ -46,13 +47,14 @@
   /* fonds dynamiques */
   [data-w=sunny] { --g: linear-gradient(160deg, #1d4ed8 0%, #38bdf8 55%, #fbbf24 100%); --glow: rgba(251,191,36,.35); }
   [data-w=partlycloudy] { --g: linear-gradient(160deg, #2f4f8f 0%, #5b93d8 55%, #a8c8ec 100%); --glow: rgba(91,147,216,.35); }
-  [data-w=cloudy], [data-w=exceptional] { --g: linear-gradient(160deg, #27364b 0%, #4b5d75 55%, #8b9db3 100%); --glow: rgba(139,157,179,.25); }
+  [data-w=cloudy] { --g: linear-gradient(160deg, #27364b 0%, #4b5d75 55%, #8b9db3 100%); --glow: rgba(139,157,179,.25); }
   [data-w=rainy] { --g: linear-gradient(160deg, #0b1424 0%, #1c3556 55%, #3d6a91 100%); --glow: rgba(61,106,145,.3); }
   [data-w=pouring] { --g: linear-gradient(160deg, #050b17 0%, #11233f 55%, #24456f 100%); --glow: rgba(36,69,111,.35); }
   [data-w^=lightning] { --g: linear-gradient(160deg, #0a0d1f 0%, #2a2766 55%, #4c3a92 100%); --glow: rgba(124,108,220,.35); }
   [data-w=clear-night] { --g: linear-gradient(160deg, #020617 0%, #0f1b3d 55%, #2a2a6a 100%); --glow: rgba(99,102,241,.3); }
   [data-w=snowy], [data-w=snowy-rainy], [data-w=hail] { --g: linear-gradient(160deg, #3a4a63 0%, #6c819f 55%, #a9bdd6 100%); --glow: rgba(169,189,214,.3); }
   [data-w=fog] { --g: linear-gradient(160deg, #3b4658 0%, #6e7c8e 55%, #aab5c2 100%); --glow: rgba(170,181,194,.25); }
+  [data-w=exceptional] { --g: linear-gradient(160deg, #1a0b1f 0%, #5c1a3a 50%, #c2410c 100%); --glow: rgba(251,146,60,.38); }
   [data-w=windy] { --g: linear-gradient(160deg, #123b52 0%, #2f7a92 55%, #8fd0d8 100%); --glow: rgba(143,208,216,.32); }
   [data-w=windy-variant] { --g: linear-gradient(160deg, #1f3342 0%, #4a7285 55%, #a6c4cf 100%); --glow: rgba(166,196,207,.3); }
   .fx { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
@@ -64,6 +66,8 @@
   .cd { left: -30%; width: 260px; height: 80px; border-radius: 50%; background: rgba(255,255,255,.12); filter: blur(16px); animation: drift linear infinite alternate; }
   .sg { top: -90px; left: -70px; width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, rgba(255,236,160,.6), rgba(255,236,160,0) 70%); animation: pl 6s ease-in-out infinite alternate; }
   .fh { inset: 0; background: #e0e7ff; opacity: 0; animation: fh 6s infinite; }
+  .al { inset: 0; border-radius: inherit; box-shadow: inset 0 0 70px rgba(251,146,60,.42); animation: alert 2.6s ease-in-out infinite alternate; }
+  @keyframes alert { from { opacity: .2; } to { opacity: 1; } }
   .wl { left: 0; height: 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.5) 60%, rgba(255,255,255,.9)); animation: gust linear infinite; }
   .lf { left: 0; width: 7px; height: 4px; border-radius: 80% 0 80% 0; background: rgba(255,244,214,.75); animation: leaf linear infinite; }
   @keyframes gust { from { transform: translateX(-110%); opacity: 0; } 15%, 80% { opacity: 1; } to { transform: translateX(300%); opacity: 0; } }
@@ -77,6 +81,7 @@
   @media (prefers-reduced-motion: reduce) { .fx { display: none; } }
   /* icônes animées */
   .cl { fill: #5aa2ee; stroke: #fff; stroke-width: 3; stroke-linejoin: round; }
+  .cl.ex { fill: #f97316; }
   .fl { animation: fl 5s ease-in-out infinite alternate; }
   .dr { stroke: #93c5fd; stroke-width: 3; stroke-linecap: round; fill: none; animation: fall 1s linear infinite; }
   .sn { fill: #fff; animation: fall 2.2s linear infinite; }
@@ -123,7 +128,8 @@
   const I = {
     sunny: SUN, "clear-night": MOON,
     partlycloudy: `<g transform="translate(-4 -6) scale(.7)">${SUN}</g>` + cloud('transform="translate(6 8)"'),
-    cloudy: cloud(), exceptional: cloud(),
+    cloudy: cloud(),
+    exceptional: `<g><g class="fl"><path class="cl ex" d="M20 46h26a10 10 0 0 0 1-20 14 14 0 0 0-27-3 11.5 11.5 0 0 0 0 23z"/><path d="M33 29v9" stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none"/><circle cx="33" cy="42.6" r="2.4" fill="#fff"/></g></g>`,
     rainy: cloud(up) + dr([22, 32, 42]),
     pouring: cloud(up) + dr([18, 27, 36, 45], .6),
     lightning: cloud(up) + bolt,
@@ -187,6 +193,11 @@
     const rain = { rainy: 45, pouring: 95, "lightning-rainy": 80, "snowy-rainy": 30 }[c];
     if (rain) many(rain, () => `<i class="rd" style="left:${R(0, 120)}%;animation-duration:${R(.7, 1.2)}s;animation-delay:-${R(0, 2)}s"></i>`);
     if (["snowy", "snowy-rainy", "hail"].includes(c)) many(45, () => { const z = R(3, 6); return `<i class="sw" style="left:${R(0, 100)}%;width:${z}px;height:${z}px;animation-duration:${R(7, 14)}s;animation-delay:-${R(0, 14)}s"></i>`; });
+    if (c === "exceptional") {
+      h += '<div class="al"></div>';
+      many(3, () => `<i class="cd" style="top:${R(5, 70)}%;animation-duration:${R(18, 30)}s;animation-delay:-${R(0, 18)}s"></i>`);
+      many(8, () => `<i class="wl" style="top:${R(4, 96)}%;width:${R(25, 55)}%;animation-duration:${R(1.8, 4)}s;animation-delay:-${R(0, 4)}s"></i>`);
+    }
     if (c.startsWith("windy")) {
       many(14, () => `<i class="wl" style="top:${R(4, 96)}%;width:${R(25, 55)}%;animation-duration:${R(1.6, 4)}s;animation-delay:-${R(0, 4)}s"></i>`);
       many(7, () => `<i class="lf" style="top:${R(10, 90)}%;animation-duration:${R(5, 9)}s;animation-delay:-${R(0, 9)}s"></i>`);
@@ -199,7 +210,9 @@
   function render(d) {
     setWeather(d.cond || "");
     $("bigic").innerHTML = ico(d.cond);
-    $("cond").textContent = FR[d.cond] || "Météo";
+    const ct = FR[d.cond] || "Météo";
+    $("cond").textContent = ct;
+    $("cond").classList.toggle("lg", Math.max(...ct.split(" ").map(w => w.length)) > 10);  // mot long : police réduite
     $("nm").textContent = NAME;
     $("temp").textContent = d.temp == null ? "–" : fmt(d.temp);
     const L = [d.cloud == null ? ["🌡️", "Rosée " + u(d.dew, "°C")] : ["☁️", u(d.cloud, "%")], ["🌧️", u(d.rain, "mm")], ["❄️", FRZ[d.freeze] || clean(d.freeze)], ["☀️", UV[d.uv] || clean(d.uv)], ["🌅", d.rise || "–"]];
