@@ -53,7 +53,8 @@
   [data-w=clear-night] { --g: linear-gradient(160deg, #020617 0%, #0f1b3d 55%, #2a2a6a 100%); --glow: rgba(99,102,241,.3); }
   [data-w=snowy], [data-w=snowy-rainy], [data-w=hail] { --g: linear-gradient(160deg, #3a4a63 0%, #6c819f 55%, #a9bdd6 100%); --glow: rgba(169,189,214,.3); }
   [data-w=fog] { --g: linear-gradient(160deg, #3b4658 0%, #6e7c8e 55%, #aab5c2 100%); --glow: rgba(170,181,194,.25); }
-  [data-w^=windy] { --g: linear-gradient(160deg, #134e9e 0%, #0ea5e9 55%, #67e8f9 100%); --glow: rgba(103,232,249,.3); }
+  [data-w=windy] { --g: linear-gradient(160deg, #123b52 0%, #2f7a92 55%, #8fd0d8 100%); --glow: rgba(143,208,216,.32); }
+  [data-w=windy-variant] { --g: linear-gradient(160deg, #1f3342 0%, #4a7285 55%, #a6c4cf 100%); --glow: rgba(166,196,207,.3); }
   .fx { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
   .card > :not(.fx) { position: relative; z-index: 1; }
   .fx i, .fx div { position: absolute; }
@@ -63,6 +64,10 @@
   .cd { left: -30%; width: 260px; height: 80px; border-radius: 50%; background: rgba(255,255,255,.12); filter: blur(16px); animation: drift linear infinite alternate; }
   .sg { top: -90px; left: -70px; width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, rgba(255,236,160,.6), rgba(255,236,160,0) 70%); animation: pl 6s ease-in-out infinite alternate; }
   .fh { inset: 0; background: #e0e7ff; opacity: 0; animation: fh 6s infinite; }
+  .wl { left: 0; height: 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, rgba(255,255,255,.5) 60%, rgba(255,255,255,.9)); animation: gust linear infinite; }
+  .lf { left: 0; width: 7px; height: 4px; border-radius: 80% 0 80% 0; background: rgba(255,244,214,.75); animation: leaf linear infinite; }
+  @keyframes gust { from { transform: translateX(-110%); opacity: 0; } 15%, 80% { opacity: 1; } to { transform: translateX(300%); opacity: 0; } }
+  @keyframes leaf { 0% { transform: translate(-20px, 0) rotate(0); } 25% { transform: translate(160px, -16px) rotate(180deg); } 50% { transform: translate(340px, 8px) rotate(360deg); } 75% { transform: translate(520px, -12px) rotate(540deg); } 100% { transform: translate(700px, 4px) rotate(720deg); } }
   @keyframes rain { from { transform: translate(0, 0) rotate(8deg); } to { transform: translate(-250px, 1700px) rotate(8deg); } }
   @keyframes snow { 0% { transform: translate(0, -10px); } 50% { transform: translate(18px, 800px); } 100% { transform: translate(-8px, 1700px); } }
   @keyframes tw { 50% { opacity: .15; } }
@@ -182,6 +187,11 @@
     const rain = { rainy: 45, pouring: 95, "lightning-rainy": 80, "snowy-rainy": 30 }[c];
     if (rain) many(rain, () => `<i class="rd" style="left:${R(0, 120)}%;animation-duration:${R(.7, 1.2)}s;animation-delay:-${R(0, 2)}s"></i>`);
     if (["snowy", "snowy-rainy", "hail"].includes(c)) many(45, () => { const z = R(3, 6); return `<i class="sw" style="left:${R(0, 100)}%;width:${z}px;height:${z}px;animation-duration:${R(7, 14)}s;animation-delay:-${R(0, 14)}s"></i>`; });
+    if (c.startsWith("windy")) {
+      many(14, () => `<i class="wl" style="top:${R(4, 96)}%;width:${R(25, 55)}%;animation-duration:${R(1.6, 4)}s;animation-delay:-${R(0, 4)}s"></i>`);
+      many(7, () => `<i class="lf" style="top:${R(10, 90)}%;animation-duration:${R(5, 9)}s;animation-delay:-${R(0, 9)}s"></i>`);
+    }
+    if (c === "windy-variant") many(3, () => `<i class="cd" style="top:${R(5, 70)}%;animation-duration:${R(14, 24)}s;animation-delay:-${R(0, 14)}s"></i>`);
     if (c.startsWith("lightning")) h += '<div class="fh"></div>';
     $("fx").innerHTML = h;
   }
